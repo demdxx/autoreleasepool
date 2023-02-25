@@ -34,11 +34,16 @@ import (
   "github.com/demdxx/autoreleasepool"
 )
 
+type RenderContext struct {
+  name string
+  age string
+}
+
 func indexHttpHandler(w http.ResponseWriter, r *http.Request) {
-  mp := autoreleasepool.New[map[string]string](r.Context())
-  *mp["name"] = "Dem"
-  *mp["age"] = "30"
-  fmt.Fprintf(w, "Hello, %s! You are %s years old.", mp["name"], mp["age"])
+  ct := autoreleasepool.New[RenderContext](r.Context())
+  ct.name = "Dem"
+  ct.age = "30"
+  fmt.Fprintf(w, "Hello, %s! You are %s years old.", ct.name, ct.age)
 }
 
 func main() {

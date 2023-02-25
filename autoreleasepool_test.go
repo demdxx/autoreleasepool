@@ -52,14 +52,69 @@ func TestDo(t *testing.T) {
 	})
 }
 
-func BenchmarkDo(b *testing.B) {
+func BenchmarkAp(b *testing.B) {
+	const sliceSize = 1000
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
+	b.Run("Do", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
 			err := Do(testDo(b))
 			assert.NoError(b, err)
 		}
+	})
+
+	b.Run("WithoutAuthoreleasepool", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			v := new(int)
+			*v = 42
+			a := make([]int, sliceSize, sliceSize)
+			for i := 0; i < sliceSize; i++ {
+				a[i] = *v
+			}
+			b := make([]int, sliceSize, sliceSize)
+			for i := 0; i < sliceSize; i++ {
+				b[i] = a[i]
+			}
+			b[0] = 0
+		}
+	})
+
+	b.Run("WithAuthoreleasepool", func(b *testing.B) {
+		_ = Do(func(ctx context.Context) error {
+			for i := 0; i < b.N; i++ {
+				v := New[int](ctx)
+				*v = 42
+				a := MakeSlice[int](ctx, sliceSize, sliceSize)
+				for i := 0; i < sliceSize; i++ {
+					a[i] = *v
+				}
+				b := MakeSlice[int](ctx, sliceSize, sliceSize)
+				for i := 0; i < sliceSize; i++ {
+					b[i] = a[i]
+				}
+				b[0] = 0
+			}
+			return nil
+		})
+	})
+
+	b.Run("WithAuthoreleasepool2", func(b *testing.B) {
+		_ = Do(func(ctx context.Context) error {
+			for i := 0; i < b.N; i++ {
+				v := New[int](ctx)
+				*v = 42
+				a := MakeSlice[int](ctx, sliceSize, sliceSize)
+				for i := 0; i < sliceSize; i++ {
+					a[i] = *v
+				}
+				b := MakeSlice[int](ctx, sliceSize, sliceSize)
+				for i := 0; i < sliceSize; i++ {
+					b[i] = a[i]
+				}
+				b[0] = 0
+			}
+			return nil
+		})
 	})
 }
